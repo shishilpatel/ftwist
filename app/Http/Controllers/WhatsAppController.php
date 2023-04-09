@@ -16,8 +16,8 @@ class WhatsAppController extends Controller
     public function __construct()
     {
         $whatsapp_cloud_api = new WhatsAppCloudApi([
-            'from_phone_number_id' => '107064175639982',
-            'access_token' => 'EAAQmGiZBplZBIBALnWZB8gXLWNUMWwzrGgeQBAPwFj30ZAVTxKUegct50NNA2LqwiTD4Tg25u6LD5EC2h1ch9uC5djWaYifvFMEhdq0CO8zjmwiSbToaHKmbdTZB5Wp20EXNbaYGLekuzXQmfTZBPOtOXndBmFlTZC2tSHAsOBrPtTZBZAZBBE9z0clbarOzlZC7ZAZCPBy2g1XzthQZDZD',
+            'from_phone_number_id' => env("PHONE_NUMBER_ID"),
+            'access_token' => env("ACCESS_TOKEN"),
         ]);
         //$whatsapp_cloud_api->sendTextMessage();
     }
@@ -40,7 +40,7 @@ class WhatsAppController extends Controller
         // Instantiate the WhatsAppCloudApi super class.
         $webhook = new WebHook();
 
-        echo $webhook->verify($_GET, "Happy_123");
+        echo $webhook->verify($_GET, env("MY_TOKEN"));
     }
 
 
