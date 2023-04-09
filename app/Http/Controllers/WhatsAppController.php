@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\WhatsApp;
 use Illuminate\Http\Request;
-use Netflie\WhatsAppCloudApi\WhatsAppCloudApi;
 use Netflie\WhatsAppCloudApi\WebHook;
+use Netflie\WhatsAppCloudApi\WhatsAppCloudApi;
 use stdClass;
+use Netflie\WhatsAppCloudApi\Message\OptionsList\Row;
+use Netflie\WhatsAppCloudApi\Message\OptionsList\Section;
+use Netflie\WhatsAppCloudApi\Message\OptionsList\Action;
 
 class WhatsAppController extends Controller
 {
@@ -19,7 +22,6 @@ class WhatsAppController extends Controller
             'from_phone_number_id' => env("PHONE_NUMBER_ID"),
             'access_token' => env("ACCESS_TOKEN"),
         ]);
-        //$whatsapp_cloud_api->sendTextMessage();
     }
 
     /**
@@ -46,6 +48,8 @@ class WhatsAppController extends Controller
             $recieved = new stdClass();
 
             $recieved = $webhook->read($data);
+            $this->whatsapp_cloud_api->sendTemplate('919081190819', 'hello_world', 'en_US'); // Language is optional
+
             $this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
             error_log($recieved);
             //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
@@ -57,9 +61,11 @@ class WhatsAppController extends Controller
 
     }
 
-    public function checkMessageType($payload){
+    public function checkMessageType($payload)
+    {
 
     }
+
     public function read()
     {
         $webhook = new WebHook();

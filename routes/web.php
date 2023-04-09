@@ -18,6 +18,7 @@ use App\Models;
 */
 
 Route::get('/', function () {
+    //return env('PHONE_NUMBER_ID');
     return view('welcome');
 });
 Route::get('/waba', [\App\Http\Controllers\WhatsAppController::class, 'index']);
