@@ -46,7 +46,8 @@ class WhatsAppController extends Controller
             $recieved = new stdClass();
 
             $recieved = $webhook->read($data);
-            error_log(json_encode($data));
+            $this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
+            error_log($recieved);
             //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
         }
     }
