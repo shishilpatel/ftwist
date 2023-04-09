@@ -40,7 +40,7 @@ class WhatsAppController extends Controller
         // Instantiate the WhatsAppCloudApi super class.
         $webhook = new WebHook();
 
-        echo $webhook->verify($_GET, env("MY_TOKEN"));
+        return $webhook->verify($_GET, env("MY_TOKEN"));
     }
 
 
