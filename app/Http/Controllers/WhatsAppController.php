@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Netflie\WhatsAppCloudApi\WebHook;
 use Netflie\WhatsAppCloudApi\WhatsAppCloudApi;
 use stdClass;
+use Illuminate\Support\Facades\Log;
+
 use Netflie\WhatsAppCloudApi\Message\OptionsList\Row;
 use Netflie\WhatsAppCloudApi\Message\OptionsList\Section;
 use Netflie\WhatsAppCloudApi\Message\OptionsList\Action;
@@ -39,17 +41,20 @@ class WhatsAppController extends Controller
 
     public function webhookHandler()
     {
+        Log::debug('In Webhook Handler Function');
         // Instantiate the WhatsAppCloudApi super class.
         $webhook = new WebHook();
         if ($_SERVER['REQUEST_METHOD'] == "GET") {
+            Log::debug('In Webhook if Condition');
             echo $webhook->verify($_GET, env("MY_TOKEN"));
         } else {
+            Log::debug('In Webhook else Condition');
             $data = json_decode(file_get_contents('php://input'), true);
             $recieved = new stdClass();
-
+            Log::debug("content of FB WebHook".file_get_contents('php://input'));
             $recieved = $webhook->read($data);
             $this->whatsapp_cloud_api->sendTemplate('919081190819', 'hello_world', 'en_US'); // Language is optional
-
+            Log::debug('This is after Template sending code');
             $this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
             error_log($recieved);
             //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
