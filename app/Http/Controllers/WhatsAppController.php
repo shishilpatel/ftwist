@@ -39,11 +39,26 @@ class WhatsAppController extends Controller
     {
         // Instantiate the WhatsAppCloudApi super class.
         $webhook = new WebHook();
+        if ($_SERVER['REQUEST_METHOD'] == "GET") {
+            echo $webhook->verify($_GET, env("MY_TOKEN"));
+        } else {
+            $data = json_decode(file_get_contents('php://input'), true);
+            $recieved = new stdClass();
 
-        return $webhook->verify($_GET, env("MY_TOKEN"));
+            $recieved = $webhook->read($data);
+            error_log(json_encode($data));
+            //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
+        }
     }
 
+    public function sendTextMessage()
+    {
 
+    }
+
+    public function checkMessageType($payload){
+
+    }
     public function read()
     {
         $webhook = new WebHook();
