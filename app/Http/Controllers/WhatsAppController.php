@@ -35,7 +35,7 @@ class WhatsAppController extends Controller
         dd($result);
     }
 
-    public function webhook()
+    public function webhookHandler()
     {
         // Instantiate the WhatsAppCloudApi super class.
         $webhook = new WebHook();
