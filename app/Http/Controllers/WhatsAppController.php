@@ -19,7 +19,7 @@ class WhatsAppController extends Controller
             'from_phone_number_id' => '107064175639982',
             'access_token' => 'EAAQmGiZBplZBIBALnWZB8gXLWNUMWwzrGgeQBAPwFj30ZAVTxKUegct50NNA2LqwiTD4Tg25u6LD5EC2h1ch9uC5djWaYifvFMEhdq0CO8zjmwiSbToaHKmbdTZB5Wp20EXNbaYGLekuzXQmfTZBPOtOXndBmFlTZC2tSHAsOBrPtTZBZAZBBE9z0clbarOzlZC7ZAZCPBy2g1XzthQZDZD',
         ]);
-        $whatsapp_cloud_api->sendTextMessage();
+        //$whatsapp_cloud_api->sendTextMessage();
     }
 
     /**
