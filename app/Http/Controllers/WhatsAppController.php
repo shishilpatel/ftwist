@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\WebhookRaw;
 use App\Models\WhatsApp;
 use Illuminate\Http\Request;
 use Netflie\WhatsAppCloudApi\WebHook;
@@ -52,9 +53,14 @@ class WhatsAppController extends Controller
 
             $recieved = $webhook->read($data);
 
-            $this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
+            //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
+
+            $webhookCall = new WebhookRaw();
+            $webhookCall->payload = json_encode($data);
+
+            $webhookCall->save();
             //$this->sendMessage($recieved->customer()->phoneNumber(), $recieved->customer()->name(), $recieved->message());
-            return response(200);
+            return response($data);
             //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
         }
     }
@@ -66,7 +72,12 @@ class WhatsAppController extends Controller
 
     public function checkMessageType($payload)
     {
-
+        $entry = $payload['entry'][0] ?? [];
+        $notificationType = $entry['changes'][0]['field'] ?? [];
+        $messageType = $entry['changes'][0]['value']['messages'][0]['type'] ?? [];
+        $status = $entry['changes'][0]['value']['statuses'][0] ?? [];
+        $contact = $entry['changes'][0]['value']['contacts'][0] ?? [];
+        $metadata = $entry['changes'][0]['value']['metadata'] ?? [];
     }
 
     public function read()
