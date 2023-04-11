@@ -20,7 +20,7 @@ class WhatsAppController extends Controller
 
     public function __construct()
     {
-        $whatsapp_cloud_api = new WhatsAppCloudApi([
+        $this->whatsapp_cloud_api = new WhatsAppCloudApi([
             'from_phone_number_id' => env("PHONE_NUMBER_ID"),
             'access_token' => env("ACCESS_TOKEN"),
         ]);
@@ -39,24 +39,22 @@ class WhatsAppController extends Controller
         dd($result);
     }
 
-    public function webhookHandler()
+    public function webhookHandler(Request $request)
     {
         Log::debug('In Webhook Handler Function');
         // Instantiate the WhatsAppCloudApi super class.
         $webhook = new WebHook();
         if ($_SERVER['REQUEST_METHOD'] == "GET") {
-            Log::debug('In Webhook if Condition');
             echo $webhook->verify($_GET, env("MY_TOKEN"));
         } else {
-            Log::debug('In Webhook else Condition');
-            $data = json_decode(file_get_contents('php://input'), true);
+            /*$data = json_decode(file_get_contents('php://input'), true);
             $recieved = new stdClass();
-            Log::debug("content of FB WebHook".file_get_contents('php://input'));
+
             $recieved = $webhook->read($data);
-            $this->whatsapp_cloud_api->sendTemplate('919081190819', 'hello_world', 'en_US'); // Language is optional
-            Log::debug('This is after Template sending code');
-            $this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
-            error_log($recieved);
+
+            $this->whatsapp_cloud_api->markMessageAsRead($recieved->id());*/
+            //$this->sendMessage($recieved->customer()->phoneNumber(), $recieved->customer()->name(), $recieved->message());
+            return response(200);
             //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
         }
     }
@@ -73,7 +71,7 @@ class WhatsAppController extends Controller
 
     public function read()
     {
-        $webhook = new WebHook();
+        /*$webhook = new WebHook();
         $recieved = new stdClass();
         //$sent = $webhook->read(json_decode('{"object":"whatsapp_business_account","entry":[{"id":"101223516234933","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919019290192","phone_number_id":"107064175639982"},"statuses":[{"id":"wamid.HBgMOTE5MDgxMTkwODE5FQIAERgSNTFFNDUzMERDMzJBODQzNDg0AA==","status":"sent","timestamp":"1677269115","recipient_id":"919081190819","conversation":{"id":"273a60dfe223db2a4f3880e33e4ab52c","expiration_timestamp":"1677355560","origin":{"type":"user_initiated"}},"pricing":{"billable":true,"pricing_model":"CBP","category":"user_initiated"}}]},"field":"messages"}]}]}', true));
         $recieved = $webhook->read(json_decode('{"object":"whatsapp_business_account","entry":[{"id":"101223516234933","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"919019290192","phone_number_id":"107064175639982"},"contacts":[{"profile":{"name":"Kabir Singh"},"wa_id":"919081190819"}],"messages":[{"from":"919081190819","id":"wamid.HBgMOTE5MDgxMTkwODE5FQIAEhgUM0FCNDQzRTgwMjkxNEExQzVGOTkA","timestamp":"1679146567","text":{"body":"Hello"},"type":"text"}]},"field":"messages"}]}]}', true));
@@ -96,9 +94,9 @@ class WhatsAppController extends Controller
         $whatsapp->status_value = $sent->status();
         $whatsapp->error = $sent->errorCode();*/
 
-        $whatsapp->save();
+        /*$whatsapp->save();
 
-        dd($sent->status(), $recieved, $sent, $whatsapp);
+        dd($sent->status(), $recieved, $sent, $whatsapp);*/
 
     }
 

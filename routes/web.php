@@ -22,8 +22,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 Route::get('/waba', [\App\Http\Controllers\WhatsAppController::class, 'index']);
-Route::any('webhook', [\App\Http\Controllers\WhatsAppController::class, 'webhookHandler']);
-Route::any('read', [\App\Http\Controllers\WhatsAppController::class, 'read']);
+Route::get('/webhook', [\App\Http\Controllers\WhatsAppController::class, 'webhookHandler']);
+Route::post('/webhook', [\App\Http\Controllers\WhatsAppController::class, 'webhookHandler']);
+Route::any('/read', [\App\Http\Controllers\WhatsAppController::class, 'read']);
 
 
 /*Route::get('/test', function () {
