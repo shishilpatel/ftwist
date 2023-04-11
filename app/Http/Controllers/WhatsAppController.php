@@ -47,12 +47,12 @@ class WhatsAppController extends Controller
         if ($_SERVER['REQUEST_METHOD'] == "GET") {
             echo $webhook->verify($_GET, env("MY_TOKEN"));
         } else {
-            /*$data = json_decode(file_get_contents('php://input'), true);
+            $data = json_decode(file_get_contents('php://input'), true);
             $recieved = new stdClass();
 
             $recieved = $webhook->read($data);
 
-            $this->whatsapp_cloud_api->markMessageAsRead($recieved->id());*/
+            $this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
             //$this->sendMessage($recieved->customer()->phoneNumber(), $recieved->customer()->name(), $recieved->message());
             return response(200);
             //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
