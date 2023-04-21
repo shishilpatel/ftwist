@@ -80,7 +80,7 @@ class WhatsAppController extends Controller
             $webhookCall->payload = json_encode($data);
 
             $webhookCall->save();
-            $this->sendTextMessage();
+            $this->sendTextMessage($data);
             //$this->sendMessage($recieved->customer()->phoneNumber(), $recieved->customer()->name(), $re
             //$this->recieved->message());
             return response($data);
@@ -148,7 +148,7 @@ class WhatsAppController extends Controller
         }
     }
 
-    public function sendTextMessage()
+    public function sendTextMessage($payload)
     {
         $webhookCall = new WebhookRaw();
 
@@ -159,9 +159,10 @@ class WhatsAppController extends Controller
          * 9 = Video
          *
          * */
-        $all = $webhookCall::select('payload')->get();
-        foreach($all as $payL){
-            $payload = $this->webhook->read(json_decode($payL->payload, true));
+        //$all = $webhookCall::select('payload')->get();
+        //foreach($all as $payL){
+            $payload = $this->webhook->read($payload);
+            //dd($payload->customer());
             $whatsapp = new WhatsApp();
             $messageType = $this->checkMessageTypeSupported($payload);
 
@@ -184,7 +185,7 @@ class WhatsAppController extends Controller
             } elseif ($messageType === 'Unsupported') {
 
             }
-        }
+        //}
 
         $whatsapp->save();
         //dd($whatsapp, $payload, $message);
