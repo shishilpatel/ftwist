@@ -170,7 +170,7 @@ class WhatsAppController extends Controller
         $whatsapp->messaging_product = 'WhatsApp';
         $whatsapp->wam_id = $payload->id();
         $whatsapp->timestamp = $payload->receivedAt();
-        $whatsapp->phone_number = $payload->customer()->phoneNumber();
+        $whatsapp->phone_number = $payload->customer()->phoneNumber() !== null ? $payload->customer()->phoneNumber() : null ;
         $whatsapp->name = $payload->customer()->name();
         if ($messageType === 'Text') {
 
