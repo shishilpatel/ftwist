@@ -51,7 +51,17 @@ class WhatsAppController extends Controller
      */
     public function index()
     {
-        return $this->sendTextMessage();
+        /*
+         * 10 = Text
+         * 8 = Image
+         * 9 = Video
+         *
+         * */
+        $webhookCall = new WebhookRaw();
+        $all = $webhookCall::select('payload')->where('id', 8)->get()->toArray();
+        //echo $all[0]->payload;
+        //dd(json_decode($all[0]['payload'],true));
+        return $this->sendTextMessage(json_decode($all[0]['payload'], true));
         //$result = $whatsapp_cloud_api->sendTextMessage('919081190819', 'Hey there! Im using WhatsApp Cloud API.');
         //$result = $this->whatsapp_cloud_api->sendTextMessage('919081190819', 'hello_world');
         $result = $this->sendTemplate('919081190819', 'Kabir Singh', 'welcome_template', true);
@@ -153,12 +163,7 @@ class WhatsAppController extends Controller
         $webhookCall = new WebhookRaw();
 
         $record = array();
-        /*
-         * 10 = Text
-         * 8 = Image
-         * 9 = Video
-         *
-         * */
+
         //$all = $webhookCall::select('payload')->get();
         //foreach($all as $payL){
         $payload = $this->webhook->read($payload);
@@ -170,17 +175,16 @@ class WhatsAppController extends Controller
         $whatsapp->messaging_product = 'WhatsApp';
         $whatsapp->wam_id = $payload->id();
         $whatsapp->timestamp = $payload->receivedAt();
-        $whatsapp->phone_number = $payload->customer()->phoneNumber() ;
+        $whatsapp->phone_number = $payload->customer()->phoneNumber();
         $whatsapp->name = $payload->customer()->name();
         if ($messageType === 'Text') {
             $whatsapp->body = $payload->message();
             $whatsapp->message_type = 'Text';
         } elseif ($messageType === 'Media') {
-                $mediaID = $this->GetMediaID($payload);
-                $url = $this->GetAttachmentUrl($mediaID);
-                //$url = "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=218034757576520&ext=1681585462&hash=ATulS-rNk8Kus3cDiej7iz2N-AvYnmG0OinIvRzUSkOsZg";
-                $whatsapp->media_url = $this->GetAttachment($url, $this->getMediaExtension($payload));
-                $whatsapp->message_type = 'Media';
+            $mediaID = $this->GetMediaID($payload);
+            $url = $this->GetAttachmentUrl($mediaID);
+            $whatsapp->media_url = $this->GetAttachment($url, $this->getMediaExtension($payload));
+            $whatsapp->message_type = 'Media';
 
         } elseif ($messageType === 'Unsupported') {
 
@@ -206,8 +210,9 @@ class WhatsAppController extends Controller
             } else {
                 return "https://google.com";
             }
-        } catch (RequestException $exception) {
-            echo $exception->getMessage();
+        } catch (\Exception $e) {
+            echo Psr7\Message::toString($e->getRequest());
+            echo Psr7\Message::toString($e->getResponse());
         }
 
         //dd($response);
@@ -228,13 +233,18 @@ class WhatsAppController extends Controller
     {
         $url = "https://graph.facebook.com/v16.0/$mediaId?phone_number_id=" . env('PHONE_NUMBER_ID');
         try {
+            $response = Http::retry(3, 100, function (Exception $exception, PendingRequest $request) {
+                return $exception instanceof ConnectionException;
+            })->post(/* ... */);
+            //Http::withToken(env('ACCESS_TOKEN'))->dd()->timeout(30)->get($url);
             //$response = Http::withToken(env('ACCESS_TOKEN'))->async()->get($url);
-            $response = Http::withToken(env('ACCESS_TOKEN'))->get($url);
+            //$response = Http::withToken(env('ACCESS_TOKEN'))->get($url);
             //$response->tooManyRequests();
-            sleep(60);
-            return $response->body();
-        } catch (RequestException $exception) {
-            echo $exception->getMessage();
+            sleep(6);
+            //echo  $response->getState();
+        } catch (\Exception $e) {
+            echo Psr7\Message::toString($e->getRequest());
+            echo Psr7\Message::toString($e->getResponse());
         }
 
 
