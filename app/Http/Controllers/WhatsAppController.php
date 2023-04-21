@@ -80,7 +80,7 @@ class WhatsAppController extends Controller
             $webhookCall->payload = json_encode($data);
 
             $webhookCall->save();
-
+            $this->sendTextMessage();
             //$this->sendMessage($recieved->customer()->phoneNumber(), $recieved->customer()->name(), $re
             //$this->recieved->message());
             return response($data);
