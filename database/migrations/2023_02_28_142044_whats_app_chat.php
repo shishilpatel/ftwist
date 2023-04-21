@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('whatsapp', function (Blueprint $table) {
             $table->id()->index();
-            $table->string('wam_id')->unique();
+            $table->string('wam_id');
             $table->dateTimeTz("timestamp");
-            $table->string('body')->unique();
-            $table->string('message_type')->unique();
-            $table->string('media_url')->nullable();
+            $table->string('body');
+            $table->string('message_type');
+            $table->string('media_url');
             $table->string('status');
             $table->string('messaging_product');
             //$table->foreignId("user_id")->references('id')->on("contacts");

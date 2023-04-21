@@ -4,20 +4,36 @@ namespace App\Http\Controllers;
 
 use App\Models\WebhookRaw;
 use App\Models\WhatsApp;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+
+/*WhatsApp Packages Start*/
+
+use Netflie\WhatsAppCloudApi\Response\ResponseException;
 use Netflie\WhatsAppCloudApi\WebHook;
 use Netflie\WhatsAppCloudApi\WhatsAppCloudApi;
+use Netflie\WhatsAppCloudApi\Message\Template\Component;
+
+/*WhatsApp Packages End*/
+
 use stdClass;
 use Illuminate\Support\Facades\Log;
 
+use Illuminate\Support\Facades\Http;
 use Netflie\WhatsAppCloudApi\Message\OptionsList\Row;
 use Netflie\WhatsAppCloudApi\Message\OptionsList\Section;
 use Netflie\WhatsAppCloudApi\Message\OptionsList\Action;
+use Illuminate\Support\Facades\Storage;
+use GuzzleHttp\Client;
+use GuzzleHttp\Promise;
 
 class WhatsAppController extends Controller
 {
 
-    public $whatsapp_cloud_api;
+    public WhatsAppCloudApi $whatsapp_cloud_api;
+    public stdClass $recieved;
+    public string $endpoint;
+    public WebHook $webhook;
 
     public function __construct()
     {
@@ -25,6 +41,9 @@ class WhatsAppController extends Controller
             'from_phone_number_id' => env("PHONE_NUMBER_ID"),
             'access_token' => env("ACCESS_TOKEN"),
         ]);
+        $this->recieved = new stdClass();
+        $this->endpoint = "https://graph.facebook.com/v16.0/";
+        $this->webhook = new WebHook();
     }
 
     /**
@@ -35,11 +54,14 @@ class WhatsAppController extends Controller
     public function index()
     {
         //$result = $whatsapp_cloud_api->sendTextMessage('919081190819', 'Hey there! Im using WhatsApp Cloud API.');
-        $result = $this->whatsapp_cloud_api->sendTextMessage('919081190819', 'hello_world');
-
-        dd($result);
+        //$result = $this->whatsapp_cloud_api->sendTextMessage('919081190819', 'hello_world');
+        $result = $this->sendTemplate('919081190819', 'Kabir Singh', 'welcome_template', true);
+        //$this->whatsapp_cloud_api->sendTemplate('919081190819', 'welcome_template', 'en_US');
     }
 
+    /**
+     * @throws ResponseException
+     */
     public function webhookHandler(Request $request)
     {
         Log::debug('In Webhook Handler Function');
@@ -49,35 +71,184 @@ class WhatsAppController extends Controller
             echo $webhook->verify($_GET, env("MY_TOKEN"));
         } else {
             $data = json_decode(file_get_contents('php://input'), true);
-            $recieved = new stdClass();
 
-            $recieved = $webhook->read($data);
 
-            //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
+            $this->recieved = $webhook->read($data);
+
+            $this->whatsapp_cloud_api->markMessageAsRead($this->recieved->id());
 
             $webhookCall = new WebhookRaw();
             $webhookCall->payload = json_encode($data);
 
             $webhookCall->save();
-            //$this->sendMessage($recieved->customer()->phoneNumber(), $recieved->customer()->name(), $recieved->message());
+
+            //$this->sendMessage($recieved->customer()->phoneNumber(), $recieved->customer()->name(), $re
+            //$this->recieved->message());
             return response($data);
-            //$this->whatsapp_cloud_api->markMessageAsRead($recieved->id());
+        }
+    }
+
+    function sendTemplate($mobile, $name, $template, $components = false)
+    {
+        if ($components) {
+            $component_header = [
+                [
+                    'type' => 'text',
+                    'text' => $name,
+                ],
+            ];
+
+            $component_body = [
+
+            ];
+
+            $component_buttons = [
+                [
+                    'type' => 'button',
+                    'sub_type' => 'quick_reply',
+                    'index' => 0,
+                    'parameters' => [
+                        [
+                            'type' => 'text',
+                            'text' => 'Shop',
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'button',
+                    'sub_type' => 'quick_reply',
+                    'index' => 1,
+                    'parameters' => [
+                        [
+                            'type' => 'text',
+                            'text' => 'Track Order',
+                        ]
+                    ]
+                ],
+                [
+                    'type' => 'button',
+                    'sub_type' => 'quick_reply',
+                    'index' => 2,
+                    'parameters' => [
+                        [
+                            'type' => 'text',
+                            'text' => 'Support',
+                        ]
+                    ]
+                ]
+            ];
+
+        }
+        $component = new Component($component_header, $component_body, $component_buttons);
+
+        try {
+            $this->whatsapp_cloud_api->sendTemplate($mobile, $template, 'en_US', $component);
+        } catch (ResponseException $exception) {
+            echo "here";
+            dd($exception->response()->decodedBody(), $component);
         }
     }
 
     public function sendTextMessage()
     {
+        $webhookCall = new WebhookRaw();
+        $whatsapp = new WhatsApp();
+        $record = array();
+        /*
+         * 10 = Text
+         * 8 = Image
+         * 9 = Video
+         *
+         * */
+        $all = $webhookCall::select('payload')->where('id', 8)->get();
+        $payload = $this->webhook->read(json_decode($all[0]->payload, true));
+
+        $messageType = $this->checkMessageTypeSupported($payload);
+
+        $whatsapp->status = 'Received';
+        $whatsapp->messaging_product = 'WhatsApp';
+        $whatsapp->timestamp = $payload->receivedAt();
+        $whatsapp->phone_number = $payload->customer()->phoneNumber();
+        $whatsapp->name = $payload->customer()->name();
+        if ($messageType === 'Text') {
+            $whatsapp->wam_id = $payload->id();
+            $message['body'] = $payload->message();
+            $message['message_type'] = 'Text';
+        } elseif ($messageType === 'Media') {
+            $mediaID = $this->GetMediaID($payload);
+            $url = $this->GetAttachmentUrl($mediaID);
+            //$url = "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=218034757576520&ext=1681585462&hash=ATulS-rNk8Kus3cDiej7iz2N-AvYnmG0OinIvRzUSkOsZg";
+            $whatsapp->media_url = $this->GetAttachment($url, $this->getMediaExtension($payload));
+            $whatsapp->message_type = 'Media';
+
+        } elseif ($messageType === 'Unsupported') {
+
+        }
+        //$whatsapp->save();
+        dd($whatsapp, $payload, $message);
+
+        //$json = json_decode($this->GetAttachmentUrl($type));
+        //$json->url;
+        //
+    }
+
+    public function GetAttachment($url, $extension)
+    {
+
+        try {
+            $response = Http::withToken(env('ACCESS_TOKEN'))->get($url);
+        } catch (RequestException $exception) {
+
+            echo $exception->getMessage();
+        }
+
+        //dd($response);
+        if ($response->ok()) {
+            $binary = $response->getBody();
+            Storage::disk("public")->put("/img/" . rand(1000000000, 2000000000) . "." . $extension, $binary);
+            return url("storage/app/public/img/" . rand(1000000000, 2000000000) . "." . $extension);
+        } else {
+            return "https://google.com";
+        }
+    }
+
+    public function GetMediaID($payload)
+    {
+        return $payload->imageId();
+    }
+
+    public function GetMediaExtension($payload): string
+    {
+        return explode('/', $payload->mimeType())[1];
+    }
+
+    public function GetAttachmentUrl($mediaId)
+    {
+        $url = "https://graph.facebook.com/v16.0/$mediaId?phone_number_id=" . env('PHONE_NUMBER_ID');
+        try {
+            $response = Http::withToken(env('ACCESS_TOKEN'))->get($url);
+            $response->tooManyRequests();
+            return $response->body();
+        } catch (RequestException $exception) {
+            echo $exception->getMessage();
+        }
+
+        // Probably 'fulfilled'
+
 
     }
 
-    public function checkMessageType($payload)
+    public function checkMessageTypeSupported($payload)
     {
-        $entry = $payload['entry'][0] ?? [];
-        $notificationType = $entry['changes'][0]['field'] ?? [];
-        $messageType = $entry['changes'][0]['value']['messages'][0]['type'] ?? [];
-        $status = $entry['changes'][0]['value']['statuses'][0] ?? [];
-        $contact = $entry['changes'][0]['value']['contacts'][0] ?? [];
-        $metadata = $entry['changes'][0]['value']['metadata'] ?? [];
+        if (class_basename($payload) === "Text") {
+            return "Text";
+        } elseif (class_basename($payload) === "Media") {
+            return "Media";
+        } elseif (class_basename($payload) === "Unsupported") {
+            return "Unsupported";
+        } else {
+            return "something went wrong";
+        }
     }
 
     public function read()

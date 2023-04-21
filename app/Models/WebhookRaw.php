@@ -9,4 +9,5 @@ class WebhookRaw extends Model
 {
     use HasFactory;
     protected $table = 'webhook_calls';
+
 }

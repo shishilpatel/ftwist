@@ -10,4 +10,5 @@ class WhatsApp extends Model
     use HasFactory;
 
     protected $table = 'whatsapp';
+    protected $fillable = ['status'];
 }

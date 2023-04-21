@@ -21,11 +21,17 @@ Route::get('/', function () {
     //return env('PHONE_NUMBER_ID');
     return view('welcome');
 });
-Route::get('/waba', [\App\Http\Controllers\WhatsAppController::class, 'index']);
+Route::get('/test', [\App\Http\Controllers\WhatsAppController::class, 'index']);
+
+/*Webhook Routes DON'T CHANGE IT*/
+
 Route::get('/webhook', [\App\Http\Controllers\WhatsAppController::class, 'webhookHandler']);
 Route::post('/webhook', [\App\Http\Controllers\WhatsAppController::class, 'webhookHandler']);
-Route::any('/read', [\App\Http\Controllers\WhatsAppController::class, 'read']);
 
+/*Webhook Routes DON'T CHANGE IT*/
+
+Route::any('/read', [\App\Http\Controllers\WhatsAppController::class, 'sendTextMessage']);
+Route::any('/template', [\App\Http\Controllers\WhatsAppController::class, 'sendTextTemplate']);
 
 /*Route::get('/test', function () {
 
