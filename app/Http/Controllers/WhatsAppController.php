@@ -173,7 +173,6 @@ class WhatsAppController extends Controller
         $whatsapp->phone_number = $payload->customer()->phoneNumber() ;
         $whatsapp->name = $payload->customer()->name();
         if ($messageType === 'Text') {
-
             $whatsapp->body = $payload->message();
             $whatsapp->message_type = 'Text';
         } elseif ($messageType === 'Media') {
@@ -200,18 +199,19 @@ class WhatsAppController extends Controller
     {
         try {
             $response = Http::withToken(env('ACCESS_TOKEN'))->get($url);
+            if ($response->ok()) {
+                $binary = $response->getBody();
+                Storage::disk("public")->put("/img/" . rand(1000000000, 2000000000) . "." . $extension, $binary);
+                return url("storage/app/public/img/" . rand(1000000000, 2000000000) . "." . $extension);
+            } else {
+                return "https://google.com";
+            }
         } catch (RequestException $exception) {
             echo $exception->getMessage();
         }
 
         //dd($response);
-        if ($response->ok()) {
-            $binary = $response->getBody();
-            Storage::disk("public")->put("/img/" . rand(1000000000, 2000000000) . "." . $extension, $binary);
-            return url("storage/app/public/img/" . rand(1000000000, 2000000000) . "." . $extension);
-        } else {
-            return "https://google.com";
-        }
+
     }
 
     public function GetMediaID($payload)
