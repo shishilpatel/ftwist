@@ -41,7 +41,7 @@ class WhatsAppController extends Controller
             'from_phone_number_id' => env("PHONE_NUMBER_ID"),
             'access_token' => env("ACCESS_TOKEN"),
         ]);
-        $this->recieved;
+        $this->recieved = '';
         $this->endpoint = "https://graph.facebook.com/v16.0/";
         $this->webhook = new WebHook();
     }
