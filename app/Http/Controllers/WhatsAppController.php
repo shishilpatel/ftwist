@@ -16,7 +16,6 @@ use Netflie\WhatsAppCloudApi\Message\Template\Component;
 
 /*WhatsApp Packages End*/
 
-use stdClass;
 use Illuminate\Support\Facades\Log;
 
 use Illuminate\Support\Facades\Http;
@@ -24,8 +23,7 @@ use Netflie\WhatsAppCloudApi\Message\OptionsList\Row;
 use Netflie\WhatsAppCloudApi\Message\OptionsList\Section;
 use Netflie\WhatsAppCloudApi\Message\OptionsList\Action;
 use Illuminate\Support\Facades\Storage;
-use GuzzleHttp\Client;
-use GuzzleHttp\Promise;
+
 
 class WhatsAppController extends Controller
 {
@@ -53,6 +51,7 @@ class WhatsAppController extends Controller
      */
     public function index()
     {
+        return $this->sendTextMessage();
         //$result = $whatsapp_cloud_api->sendTextMessage('919081190819', 'Hey there! Im using WhatsApp Cloud API.');
         //$result = $this->whatsapp_cloud_api->sendTextMessage('919081190819', 'hello_world');
         $result = $this->sendTemplate('919081190819', 'Kabir Singh', 'welcome_template', true);
@@ -152,7 +151,7 @@ class WhatsAppController extends Controller
     public function sendTextMessage()
     {
         $webhookCall = new WebhookRaw();
-        $whatsapp = new WhatsApp();
+
         $record = array();
         /*
          * 10 = Text
@@ -160,32 +159,35 @@ class WhatsAppController extends Controller
          * 9 = Video
          *
          * */
-        $all = $webhookCall::select('payload')->where('id', 8)->get();
-        $payload = $this->webhook->read(json_decode($all[0]->payload, true));
+        $all = $webhookCall::select('payload')->get();
+        foreach($all as $payL){
+            $payload = $this->webhook->read(json_decode($payL->payload, true));
+            $whatsapp = new WhatsApp();
+            $messageType = $this->checkMessageTypeSupported($payload);
 
-        $messageType = $this->checkMessageTypeSupported($payload);
+            $whatsapp->status = 'Received';
+            $whatsapp->messaging_product = 'WhatsApp';
+            $whatsapp->timestamp = $payload->receivedAt();
+            $whatsapp->phone_number = $payload->customer()->phoneNumber();
+            $whatsapp->name = $payload->customer()->name();
+            if ($messageType === 'Text') {
+                $whatsapp->wam_id = $payload->id();
+                $whatsapp->body = $payload->message();
+                $whatsapp->message_type = 'Text';
+            } elseif ($messageType === 'Media') {
+                $mediaID = $this->GetMediaID($payload);
+                $url = $this->GetAttachmentUrl($mediaID);
+                //$url = "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=218034757576520&ext=1681585462&hash=ATulS-rNk8Kus3cDiej7iz2N-AvYnmG0OinIvRzUSkOsZg";
+                $whatsapp->media_url = $this->GetAttachment($url, $this->getMediaExtension($payload));
+                $whatsapp->message_type = 'Media';
 
-        $whatsapp->status = 'Received';
-        $whatsapp->messaging_product = 'WhatsApp';
-        $whatsapp->timestamp = $payload->receivedAt();
-        $whatsapp->phone_number = $payload->customer()->phoneNumber();
-        $whatsapp->name = $payload->customer()->name();
-        if ($messageType === 'Text') {
-            $whatsapp->wam_id = $payload->id();
-            $message['body'] = $payload->message();
-            $message['message_type'] = 'Text';
-        } elseif ($messageType === 'Media') {
-            $mediaID = $this->GetMediaID($payload);
-            $url = $this->GetAttachmentUrl($mediaID);
-            //$url = "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=218034757576520&ext=1681585462&hash=ATulS-rNk8Kus3cDiej7iz2N-AvYnmG0OinIvRzUSkOsZg";
-            $whatsapp->media_url = $this->GetAttachment($url, $this->getMediaExtension($payload));
-            $whatsapp->message_type = 'Media';
+            } elseif ($messageType === 'Unsupported') {
 
-        } elseif ($messageType === 'Unsupported') {
-
+            }
         }
-        //$whatsapp->save();
-        dd($whatsapp, $payload, $message);
+
+        $whatsapp->save();
+        //dd($whatsapp, $payload, $message);
 
         //$json = json_decode($this->GetAttachmentUrl($type));
         //$json->url;
@@ -194,11 +196,9 @@ class WhatsAppController extends Controller
 
     public function GetAttachment($url, $extension)
     {
-
         try {
             $response = Http::withToken(env('ACCESS_TOKEN'))->get($url);
         } catch (RequestException $exception) {
-
             echo $exception->getMessage();
         }
 
@@ -226,14 +226,14 @@ class WhatsAppController extends Controller
     {
         $url = "https://graph.facebook.com/v16.0/$mediaId?phone_number_id=" . env('PHONE_NUMBER_ID');
         try {
+            //$response = Http::withToken(env('ACCESS_TOKEN'))->async()->get($url);
             $response = Http::withToken(env('ACCESS_TOKEN'))->get($url);
-            $response->tooManyRequests();
+            //$response->tooManyRequests();
+            sleep(60);
             return $response->body();
         } catch (RequestException $exception) {
             echo $exception->getMessage();
         }
-
-        // Probably 'fulfilled'
 
 
     }
