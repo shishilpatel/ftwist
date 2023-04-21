@@ -31,7 +31,7 @@ class WhatsAppController extends Controller
 {
 
     public WhatsAppCloudApi $whatsapp_cloud_api;
-    public stdClass $recieved;
+    public $recieved;
     public string $endpoint;
     public WebHook $webhook;
 
