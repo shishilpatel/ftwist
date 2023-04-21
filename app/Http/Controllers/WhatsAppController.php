@@ -170,18 +170,18 @@ class WhatsAppController extends Controller
         $whatsapp->messaging_product = 'WhatsApp';
         $whatsapp->wam_id = $payload->id();
         $whatsapp->timestamp = $payload->receivedAt();
-        $whatsapp->phone_number = $payload->customer()->phoneNumber() !== null ? $payload->customer()->phoneNumber() : null ;
+        $whatsapp->phone_number = $payload->customer()->phoneNumber() ;
         $whatsapp->name = $payload->customer()->name();
         if ($messageType === 'Text') {
 
             $whatsapp->body = $payload->message();
             $whatsapp->message_type = 'Text';
         } elseif ($messageType === 'Media') {
-//                $mediaID = $this->GetMediaID($payload);
-//                $url = $this->GetAttachmentUrl($mediaID);
-//                //$url = "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=218034757576520&ext=1681585462&hash=ATulS-rNk8Kus3cDiej7iz2N-AvYnmG0OinIvRzUSkOsZg";
-//                $whatsapp->media_url = $this->GetAttachment($url, $this->getMediaExtension($payload));
-//                $whatsapp->message_type = 'Media';
+                $mediaID = $this->GetMediaID($payload);
+                $url = $this->GetAttachmentUrl($mediaID);
+                //$url = "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=218034757576520&ext=1681585462&hash=ATulS-rNk8Kus3cDiej7iz2N-AvYnmG0OinIvRzUSkOsZg";
+                $whatsapp->media_url = $this->GetAttachment($url, $this->getMediaExtension($payload));
+                $whatsapp->message_type = 'Media';
 
         } elseif ($messageType === 'Unsupported') {
 
